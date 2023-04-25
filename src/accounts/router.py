@@ -17,10 +17,18 @@ async def get_accounts(id: int ,session: AsyncSession = Depends(get_async_sessio
     try:
         query = select(account).where(account.c.user_id == id)
         result = await session.execute(query)
-        accounts = result.fetchall()
-        json_str = json.dumps(accounts, default=str)
-        json_dict = json.loads(json_str)
-        return json.dumps(json_dict, ensure_ascii=False)
+        accounts_by_user = [{row[0]: {
+            'account_name': row[1], 
+            'broker_name': row[2], 
+            'date': row[3], 
+            'user_id': row[4], 
+            }
+            } for row in result.all()]
+        return {"accounts_by_user": accounts_by_user}
+        # accounts = result.fetchall()
+        # json_str = json.dumps(accounts, default=str)
+        # json_dict = json.loads(json_str)
+        # return json.dumps(json_dict, ensure_ascii=False)
     except Exception:
         # Передать ошибку разработчикам
         raise HTTPException(status_code=500, detail={
