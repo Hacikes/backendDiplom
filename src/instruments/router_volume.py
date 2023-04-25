@@ -111,7 +111,7 @@ async def get_percent_for_instrument_name_for_account(account_id: int, session=D
     
 
 # Получение объёма инструмента для пользователя    
-@router.get("/user/{user_id}/percent_for_instrument_name_for_account", description="Получение объёма инструмента для пользователя. Использовать в диаграмме для пользователя")
+@router.get("/user/{user_id}/percent_for_instrument_name_for_user", description="Получение объёма инструмента для пользователя. Использовать в диаграмме для пользователя")
 async def get_percent_for_instrument_name_for_user(user_id: int, session=Depends(get_async_session)):
     try:
         subquery = (
