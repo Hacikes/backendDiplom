@@ -51,7 +51,7 @@ account = Table(
     Column("id", Integer, primary_key=True),
     Column("account_name", String, nullable=False), # имя счёта
     Column("broker_name", String, nullable=False), # имя брокера
-    Column("date", TIMESTAMP, default=datetime.utcnow), # время регистрации счёта
+    Column("date", TIMESTAMP(timezone=False), default=datetime.utcnow), # время регистрации счёта
     Column("user_id", Integer, ForeignKey(user.c.id)), # id пользователя
 )
 

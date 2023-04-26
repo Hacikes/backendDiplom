@@ -10,7 +10,7 @@ class Account(BaseModel):
     # id: int
     account_name: str
     broker_name:str
-    date: datetime
+    #date: datetime
     user_id: int
 
 class UpdateAccount(BaseModel):

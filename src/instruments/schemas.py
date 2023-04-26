@@ -10,7 +10,7 @@ class InstrumentCreate(BaseModel):
     currency_id: int
     quantity: int
     figi: str
-    date: datetime
+    #date: datetime
     instrument_type_id: int
     account_id: int
     operation_type_id: int
