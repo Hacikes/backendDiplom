@@ -1,8 +1,8 @@
-"""update table user add superuser for all
+"""default DB
 
-Revision ID: f74025d22e6c
-Revises: eab51d235d51
-Create Date: 2023-04-15 21:43:18.779063
+Revision ID: ada9eb3e55b7
+Revises: 
+Create Date: 2023-04-26 23:47:47.414003
 
 """
 from alembic import op
@@ -10,8 +10,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'f74025d22e6c'
-down_revision = 'eab51d235d51'
+revision = 'ada9eb3e55b7'
+down_revision = None
 branch_labels = None
 depends_on = None
 

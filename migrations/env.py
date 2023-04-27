@@ -12,7 +12,7 @@ sys.path.append(os.path.join(sys.path[0], 'src'))
 
 from src.config import DB_HOST, DB_PORT, DB_USER, DB_NAME, DB_PASS
 from models import metadata as metadata_all_models
-from src.instruments.models import metadata as metadata_instruments
+#from src.instruments.models import metadata as metadata_instruments
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -34,7 +34,7 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-target_metadata = [metadata_all_models, metadata_instruments]
+target_metadata = [metadata_all_models]
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
