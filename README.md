@@ -62,12 +62,12 @@ API будет находится по адресу: http://127.0.0.1:8000/docs
 после этого появятся таблички
 
 После создание бд необходимо создать роли:
-insert into role values (1, 'user', null), (2, 'admin', null)
+insert into role values (1, 'user', null), (2, 'admin', null);
 select * from role
 
 Создать типы инструментов:
-insert into instument_type values (1, 'Акции'), (2, 'Облигации'), (3, 'Валюта'), (4, 'Металлы'), (5, 'Фьючерсы');
-select * from instument_type
+insert into instrument_type values (1, 'Акции'), (2, 'Облигации'), (3, 'Валюта'), (4, 'Металлы'), (5, 'Фьючерсы');
+select * from instrument_type
 
 Создать типы валют:
 insert into currency_type  values (1, 'EUR/RUB', 1.0), (2, 'USD/RUB', 1.0), (3, 'CHY/RUB', 1.0), (4, 'HKD/RUB', 1.0), (5, 'RUB', 1.0);
@@ -79,22 +79,20 @@ select * from operation_type
 
 Шаблон для создания инструментов
 {
-  "id": 75345,
   "instrument_name": "Apple",
   "price": 80.0,
   "currency_id": 2,
   "quantity": 5,
   "figi": "A",
-  "date": "2023-04-16T11:57:33.986",
   "instrument_type_id": 1,
   "account_id": 1,
   "operation_type_id": 1
 }
 
 Для реализации логики покупки и продажи инструментов используются триггеры:
-- update_total_quantity_and_avg_price()
-- check_quantity_trigger()
-- prevent_zero_values()
+- update_total_quantity_and_avg_price()  \/
+- check_quantity_trigger() \/
+- prevent_zero_values() \/
 - insert_instrument()
 -----------------------------------------------------------------------------------------------------------------------------------------------------
 ПРОМТ (прочитай полностью, чтобы понять логику)
