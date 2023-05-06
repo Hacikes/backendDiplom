@@ -12,6 +12,7 @@ router = APIRouter(
     tags=['Account']
 )
 
+
 @router.get("/")
 async def get_accounts(id: int ,session: AsyncSession = Depends(get_async_session)):
     try:

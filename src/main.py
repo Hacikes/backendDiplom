@@ -16,7 +16,9 @@ app.add_middleware(
     allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"]
+    allow_headers=["*"],
+    secure = False,
+    SameSite=None
 )
 
 app = FastAPI(
@@ -39,6 +41,26 @@ app.include_router(
     fastapi_users.get_users_router(UserRead, UserUpdate),
     prefix="/user",
     tags=["User"],
+)
+
+# Berrar auth Routers
+from auth.base_config_berrar import auth_backend_berrar, fastapi_users_berrar
+app.include_router(
+    fastapi_users_berrar.get_auth_router(auth_backend_berrar),
+    prefix="/auth_berrar",
+    tags=["Auth_berrar"],
+)
+
+app.include_router(
+    fastapi_users_berrar.get_register_router(UserRead, UserCreate),
+    prefix="/auth_berrar",
+    tags=["Auth_berrar"],
+)
+
+app.include_router(
+    fastapi_users_berrar.get_users_router(UserRead, UserUpdate),
+    prefix="/user_berrar",
+    tags=["User_berrar"],
 )
 
 app.include_router(router_account)
