@@ -1,5 +1,7 @@
 from typing import Optional
 
+from pydantic import BaseModel
+
 from fastapi_users import schemas
 
 
@@ -33,3 +35,6 @@ class UserUpdate(schemas.BaseUserUpdate):
     is_active: Optional[bool] = True
     is_superuser: Optional[bool] = True
     is_verified: Optional[bool] = False
+
+class ForgotPassword(BaseModel):
+    email: str

@@ -370,7 +370,7 @@ select * from operation_type
 --------------------------------------------------------------------------------------------------------------------------------------
 
 ПРОМТ(При добавление инструмента снимаются и добавляются деньги. Если денег не было в нужной валюте, то падает ошибка, правда не выводится как надо
-        котировки валюты берутся из таблицы currency_type:()
+        котировки берутся из среднего валюты, которая уже есть на счёте(этого в промте нет, но скрипт триггера обновлён)
     Напиши один триггер для базы данных posgresql, который будет выполняться следующую логику:
 
     Если добавляется запись в таблицу instrument и operation_type_id=1 и intrument_name не равен "RUB","EUR","USD", "CHY", "HKD" , 
@@ -453,7 +453,9 @@ BEGIN
                 AND account_id = NEW.account_id
         ) then
             -- получаем курс валюты из таблицы currency_type
-        	SELECT rate INTO cur_rate FROM currency_type WHERE id = NEW.currency_id;
+        	SELECT avg_price INTO cur_rate 
+			FROM total_quantity_and_avg_price_instrument_account 
+			WHERE currency_id = NEW.currency_id AND instrument_name IN ('RUB', 'EUR', 'USD', 'CHY', 'HKD');
             INSERT INTO public.instrument (
                 instrument_name, 
                 price, 
@@ -489,7 +491,9 @@ BEGIN
                 AND account_id = NEW.account_id
         ) then
             -- получаем курс валюты из таблицы currency_type
-        	SELECT rate INTO cur_rate FROM currency_type WHERE id = NEW.currency_id;
+        	SELECT avg_price INTO cur_rate 
+			FROM total_quantity_and_avg_price_instrument_account 
+			WHERE currency_id = NEW.currency_id AND instrument_name IN ('RUB', 'EUR', 'USD', 'CHY', 'HKD');
             INSERT INTO public.instrument (
                 instrument_name, 
                 price, 

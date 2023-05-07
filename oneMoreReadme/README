@@ -77,7 +77,7 @@ insert into instument_type values (1, 'Акции'), (2, 'Облигации'), 
 select * from instument_type
 
 Создать типы валют:
-insert into currency_type  values (1, 'EUR/RUB', 88.0), (2, 'USD/RUB', 81.0), (3, 'CHY/RUB', 11.0), (4, 'HKD/RUB', 8.0), (5, 'RUB', 1.0);
+insert into currency_type  values (1, 'EUR', 88.0), (2, 'USD', 81.0), (3, 'CHY', 11.0), (4, 'HKD', 8.0), (5, 'RUB', 1.0);
 select * from currency_type
 
 Создать типы операций:
@@ -379,7 +379,7 @@ select * from operation_type
 --------------------------------------------------------------------------------------------------------------------------------------
 
 ПРОМТ(При добавление инструмента снимаются и добавляются деньги. Если денег не было в нужной валюте, то падает ошибка, правда не выводится как надо
-        котировки валюты берутся из таблицы currency_type:()
+        котировки берутся из среднего валюты, которая уже есть на счёте(этого в промте нет, но скрипт триггера обновлён)
     Напиши один триггер для базы данных posgresql, который будет выполняться следующую логику:
 
     Если добавляется запись в таблицу instrument и operation_type_id=1 и intrument_name не равен "RUB","EUR","USD", "CHY", "HKD" , 
@@ -389,7 +389,7 @@ select * from operation_type
     то 
     Создаётся запись в таблице instrument, в которой 
     -intrument_name="RUB", если currency_id=5, ="EUR", если currency_id=1, ="USD", если currency_id=2, ="CHY", если currency_id=3, ="HKD", если currency_id=4 из добавляемой записи
-    -price=1.0
+    -price= avg_price из таблицы total_quantity_and_avg_price_instrument_account
     -currency_id (совпадает с полем currency_id в таблице instrument добавляемой записи)
     -quantity (price умножить на quantity в таблице instrument добавляемой записи)
     -instrument_type_id (совпадает с полем instrument_type_id в таблице instrument добавляемой записи)
@@ -408,7 +408,7 @@ select * from operation_type
     , то 
     Создаётся запись в таблице instrument, в которой 
     -intrument_name="RUB", если currency_id=5, ="EUR", если currency_id=1, ="USD", если currency_id=2, ="CHY", если currency_id=3, ="HKD", если currency_id=4 из добавляемой записи
-    -price=1.0
+    -price=price= avg_price из таблицы total_quantity_and_avg_price_instrument_account
     -currency_id (совпадает с полем currency_id в таблице instrument добавляемой записи)
     -quantity (price умножить на quantity в таблице instrument добавляемой записи)
     -instrument_type_id (совпадает с полем instrument_type_id в таблице instrument добавляемой записи)
@@ -462,7 +462,9 @@ BEGIN
                 AND account_id = NEW.account_id
         ) then
             -- получаем курс валюты из таблицы currency_type
-        	SELECT rate INTO cur_rate FROM currency_type WHERE id = NEW.currency_id;
+        	SELECT avg_price INTO cur_rate 
+			FROM total_quantity_and_avg_price_instrument_account 
+			WHERE currency_id = NEW.currency_id AND instrument_name IN ('RUB', 'EUR', 'USD', 'CHY', 'HKD');
             INSERT INTO public.instrument (
                 instrument_name, 
                 price, 
@@ -498,7 +500,9 @@ BEGIN
                 AND account_id = NEW.account_id
         ) then
             -- получаем курс валюты из таблицы currency_type
-        	SELECT rate INTO cur_rate FROM currency_type WHERE id = NEW.currency_id;
+        	SELECT avg_price INTO cur_rate 
+			FROM total_quantity_and_avg_price_instrument_account 
+			WHERE currency_id = NEW.currency_id AND instrument_name IN ('RUB', 'EUR', 'USD', 'CHY', 'HKD');
             INSERT INTO public.instrument (
                 instrument_name, 
                 price, 
