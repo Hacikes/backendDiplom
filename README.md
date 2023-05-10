@@ -70,7 +70,7 @@ insert into instrument_type values (1, 'Акции'), (2, 'Облигации'),
 select * from instrument_type
 
 Создать типы валют:
-insert into currency_type  values (1, 'EUR/RUB', 1.0), (2, 'USD/RUB', 1.0), (3, 'CHY/RUB', 1.0), (4, 'HKD/RUB', 1.0), (5, 'RUB', 1.0);
+insert into currency_type  values (1, 'EUR', 1.0), (2, 'USD', 1.0), (3, 'CHY', 1.0), (4, 'HKD', 1.0), (5, 'RUB', 1.0);
 select * from currency_type
 
 Создать типы операций:

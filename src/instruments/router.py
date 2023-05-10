@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import func, or_, select, insert, update, delete
+from sqlalchemy import func, or_, select, insert, update, delete, case
 from sqlalchemy.orm import selectinload
 import json
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -209,14 +209,18 @@ async def get_total_volume_in_RUB(account_id: int, session=Depends(get_async_ses
 
 # Получение общего объёма денег в рублях со всех счетов и по всем инструментам пользователя, включая валюту
 @router.get("/{user_id}/total_volume_in_RUB", response_model=float, description="Получение общего объёма денег в рублях со всех счетов и по всем инструментам пользователя, включая валюту")
-async def get_total_volume_in_RUB_by_user_id(user_id: int, session: AsyncSession = Depends(get_async_session)):
+async def get_total_volume_in_RUB_by_user_id(user_id: int, session=Depends(get_async_session)):
     try:
         query = (
             select(
                 func.sum(
-                    total_quantity_and_avg_price_instrument_account.c.total_quantity *
-                    total_quantity_and_avg_price_instrument_account.c.avg_price *
-                    currency_type.c.rate
+                    case(
+                        
+                        (total_quantity_and_avg_price_instrument_account.c.instrument_name.in_(["RUB", "EUR", "USD", "HKD", "CHY"]),
+                        total_quantity_and_avg_price_instrument_account.c.total_quantity * currency_type.c.rate),
+                        
+                        else_=total_quantity_and_avg_price_instrument_account.c.total_quantity * total_quantity_and_avg_price_instrument_account.c.avg_price * currency_type.c.rate
+                    )
                 )
             )
             .select_from(total_quantity_and_avg_price_instrument_account)
@@ -235,6 +239,8 @@ async def get_total_volume_in_RUB_by_user_id(user_id: int, session: AsyncSession
             "data": None,
             "details": e
         })
+
+
     
     # Получение свободного кеша для счёта по всем валютам. Вывод в рублях
 @router.get("/{account_id}/total_value_for_instrument_type_id", description="Получение свободного кеша для счёта по всем валютам. Вывод в рублях")
