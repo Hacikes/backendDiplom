@@ -215,7 +215,7 @@ async def get_percent_currency_on_all_instruments(user_id: int, session=Depends(
         # json_dict = json.loads(json_str)
         # return json.dumps(json_dict, ensure_ascii=False)
 
-        percent_currency_on_all_instruments = [{row[0]: {'share': row[1]}} for row in result.all()]
+        percent_currency_on_all_instruments = [{str(row[0]): row[1]} for row in result.all()]
         return {"percent_currency_on_all_instruments": percent_currency_on_all_instruments}
 
     except Exception as e:
