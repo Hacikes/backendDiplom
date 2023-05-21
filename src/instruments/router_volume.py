@@ -210,10 +210,14 @@ async def get_percent_currency_on_all_instruments(user_id: int, session=Depends(
             .group_by(currency_type.c.carrency_name)
         )
         result = await session.execute(query)
-        percent_currency_on_all_instruments = result.fetchall()
-        json_str = json.dumps(percent_currency_on_all_instruments, default=str, ensure_ascii=False)
-        json_dict = json.loads(json_str)
-        return json.dumps(json_dict, ensure_ascii=False)
+        # percent_currency_on_all_instruments = result.fetchall()
+        # json_str = json.dumps(percent_currency_on_all_instruments, default=str, ensure_ascii=False)
+        # json_dict = json.loads(json_str)
+        # return json.dumps(json_dict, ensure_ascii=False)
+
+        percent_currency_on_all_instruments = [{row[0]: {'share': row[1]}} for row in result.all()]
+        return {"percent_currency_on_all_instruments": percent_currency_on_all_instruments}
+
     except Exception as e:
         # Передать ошибку разработчикам
         raise HTTPException(status_code=500, detail={
