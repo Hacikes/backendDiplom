@@ -181,24 +181,24 @@ async def get_total_volume_in_RUB(account_id: int, session=Depends(get_async_ses
         query = (
             select(
                 func.sum(
-                    currency_type.c.rate *
-                    total_quantity_and_avg_price_instrument_account.c.avg_price *
-                    total_quantity_and_avg_price_instrument_account.c.total_quantity
+                    case(
+                        
+                        (total_quantity_and_avg_price_instrument_account.c.instrument_name.in_(["RUB", "EUR", "USD", "HKD", "CHY"]),
+                        total_quantity_and_avg_price_instrument_account.c.total_quantity * currency_type.c.rate),
+                        
+                        else_=total_quantity_and_avg_price_instrument_account.c.total_quantity * total_quantity_and_avg_price_instrument_account.c.avg_price * currency_type.c.rate
+                    )
                 )
             )
             .select_from(total_quantity_and_avg_price_instrument_account)
+            .join(account, account.c.id == total_quantity_and_avg_price_instrument_account.c.account_id)
+            # .join(user, user.c.id == account.c.user_id)
             .join(currency_type, currency_type.c.id == total_quantity_and_avg_price_instrument_account.c.currency_id)
-            .where(
-                and_(
-                    total_quantity_and_avg_price_instrument_account.c.account_id == account_id,
-                    #~total_quantity_and_avg_price_instrument_account.c.instrument_name.in_(["EUR", "USD", "CHY", "HKD", "RUB"])
-                )
-            )
+            .where(account.c.id == account_id)
         )
         result = await session.execute(query)
-        total_volume_RUB = result.scalar()
-        print(f"Общий объём в рублях по всем инструментах по счёту: {result} RUB")
-        return {"total_volume_RUB": total_volume_RUB}
+        total_volume_in_RUB = result.scalar()
+        return total_volume_in_RUB
     except Exception as e:
         # Передать ошибку разработчикам
         raise HTTPException(status_code=500, detail={
@@ -291,3 +291,5 @@ async def get_free_value_for_user(user_id: int, session=Depends(get_async_sessio
             "data": None,
             "details": e
         })
+
+
