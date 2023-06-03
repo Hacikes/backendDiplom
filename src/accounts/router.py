@@ -51,7 +51,7 @@ async def get_accounts(id: int, session: AsyncSession = Depends(get_async_sessio
                     'broker_name': row[2],
                     'date': row[3],
                     'user_id': row[4],
-                    'total_volume_by_account_in_RUB': await get_total_volume_in_RUB(row[0], session)
+                    'total_volume_by_account_in_RUB': await get_total_volume_in_RUB(row[0], session) or 0
                 }
             }
             for row in result.all()
@@ -68,14 +68,17 @@ async def get_total_volume_in_RUB(account_id: int, session: AsyncSession):
     try:
         query = (
             select(
-                func.sum(
-                    case(
-                        (
-                            total_quantity_and_avg_price_instrument_account.c.instrument_name.in_(["RUB", "EUR", "USD", "HKD", "CHY"]),
-                            total_quantity_and_avg_price_instrument_account.c.total_quantity * currency_type.c.rate
-                        ),
-                        else_=total_quantity_and_avg_price_instrument_account.c.total_quantity * total_quantity_and_avg_price_instrument_account.c.avg_price * currency_type.c.rate
-                    )
+                func.coalesce(
+                    func.sum(
+                        case(
+                            (
+                                total_quantity_and_avg_price_instrument_account.c.instrument_name.in_(["RUB", "EUR", "USD", "HKD", "CHY"]),
+                                total_quantity_and_avg_price_instrument_account.c.total_quantity * currency_type.c.rate
+                            ),
+                            else_=total_quantity_and_avg_price_instrument_account.c.total_quantity * total_quantity_and_avg_price_instrument_account.c.avg_price * currency_type.c.rate
+                        )
+                    ),
+                    0  # Если результат равен null, устанавливаем значение 0
                 )
             )
             .select_from(total_quantity_and_avg_price_instrument_account)
@@ -92,6 +95,7 @@ async def get_total_volume_in_RUB(account_id: int, session: AsyncSession):
             "data": None,
             "details": str(e)
         })
+
 
 
 
