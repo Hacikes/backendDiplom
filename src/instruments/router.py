@@ -111,32 +111,48 @@ async def delete_instrument_by_account_id(id: int,  session: AsyncSession = Depe
     return {"status": "success"}
 
 # Получение информации о инструментах на счёте: об их количестве и средней цены, по каждой бумаге
-@router.get("/{account_id}/total", description="Получение информации о инструментах на счёте: об их количестве и средней цены, по каждой бумаге")
-async def get_total_intruments_by_account_id(id: int,session: AsyncSession = Depends(get_async_session)):
+@router.get("/total_instruments_by_account_id/{account_id}", description="Получение информации о инструментах на счёте: об их количестве и средней цены, по каждой бумаге")
+async def get_total_instruments_by_account_id(account_id: int, session: AsyncSession = Depends(get_async_session)):
     try:
-        query = select(total_quantity_and_avg_price_instrument_account).where(total_quantity_and_avg_price_instrument_account.c.account_id == id)
+        query = (
+            select(
+                total_quantity_and_avg_price_instrument_account.c.id,
+                total_quantity_and_avg_price_instrument_account.c.instrument_name,
+                total_quantity_and_avg_price_instrument_account.c.total_quantity,
+                total_quantity_and_avg_price_instrument_account.c.avg_price,
+                currency_type.c.carrency_name,
+                total_quantity_and_avg_price_instrument_account.c.account_id,
+                instrument_type.c.instrument_type_name
+            )
+            .select_from(
+                total_quantity_and_avg_price_instrument_account
+                .join(currency_type, currency_type.c.id == total_quantity_and_avg_price_instrument_account.c.currency_id)
+                .join(instrument_type, instrument_type.c.id == total_quantity_and_avg_price_instrument_account.c.instrument_type_id)
+            )
+            .where(total_quantity_and_avg_price_instrument_account.c.account_id == account_id)
+        )
         result = await session.execute(query)
-        instruments_by_account = [{row[0]: {
-            'instrument_name': row[1], 
-            'quantity': row[2], 
-            'avg_price': row[3], 
-            'currency_id': row[4], 
-            'account_id': row[5], 
-            'instrument_type_id': row[6]
-            }
-            } for row in result.all()]
+        instruments_by_account = [
+            {
+                row[0]: {
+                    'instrument_name': row[1],
+                    'total_quantity': row[2],
+                    'avg_price': row[3],
+                    'currency_name': row[4],
+                    'account_id': row[5],
+                    'instrument_type_name': row[6],
+                }
+            } for row in result.all()
+        ]
         return {"instruments_by_account": instruments_by_account}
-        # accounts = result.fetchall()
-        # json_str = json.dumps(accounts, default=str)
-        # json_dict = json.loads(json_str)
-        # return json.dumps(json_dict, ensure_ascii=False)
-    except Exception:
+    except Exception as e:
         # Передать ошибку разработчикам
         raise HTTPException(status_code=500, detail={
             "status": "error",
             "data": None,
-            "details": None
+            "details": str(e)
         })
+
 
 # Получение информации о инструментах у пользователя: об их количестве и средней цены, по каждой бумаге
 @router.get("/total/{id:int}", description="Получение информации о инструментах у пользователя: об их количестве и средней цены, по каждой бумаге")
