@@ -674,8 +674,7 @@ async def get_percent_by_instrument_name_for_one_instrument_for_user(user_id: in
 
         query =(
             select(
-                total_quantity_and_avg_price_instrument_account.c.instrument_name, 
-                total_quantity_and_avg_price_instrument_account.c.currency_id,
+                total_quantity_and_avg_price_instrument_account.c.instrument_name,
                 func.sum(
                     case(
                         (
@@ -722,11 +721,10 @@ async def get_percent_by_instrument_name_for_one_instrument_for_user(user_id: in
             .where(user.c.id == user_id)
             .where(total_quantity_and_avg_price_instrument_account.c.instrument_name == instrument_name)
             .group_by(total_quantity_and_avg_price_instrument_account.c.instrument_name)
-            .group_by(total_quantity_and_avg_price_instrument_account.c.currency_id)
     )
 
         result = await session.execute(query)
-        percent_by_instrument_name_for_one_instrument_for_user = [{row[0]: {'': row[1], 'total_amount': row[2], 'share': row[2]}} for row in result.all()]
+        percent_by_instrument_name_for_one_instrument_for_user = [{row[0]: {'total_amount': row[1], 'share': row[2]}} for row in result.all()]
         return {"percent_by_instrument_name_for_one_instrument_for_user": percent_by_instrument_name_for_one_instrument_for_user}
     except Exception as e:
         raise HTTPException(status_code=500, detail={"status": "error", "data": None, "details": str(e)})
