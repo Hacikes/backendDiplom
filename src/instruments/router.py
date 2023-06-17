@@ -309,3 +309,35 @@ async def get_free_value_for_user(user_id: int, session=Depends(get_async_sessio
         })
 
 
+# Получения свободных денег в разных валютах для счёта
+@router.get("/{account_id}/free_currency_for_account", description="Получения свободных денег в разных валютах для счёта")
+async def get_free_currency_for_account(account_id: int, currency_name: str, session=Depends(get_async_session)):
+    try:
+        query = (
+            select(
+                total_quantity_and_avg_price_instrument_account.c.id,
+                total_quantity_and_avg_price_instrument_account.c.instrument_name,
+                total_quantity_and_avg_price_instrument_account.c.total_quantity,
+                total_quantity_and_avg_price_instrument_account.c.avg_price,
+                currency_type.c.carrency_name,
+                total_quantity_and_avg_price_instrument_account.c.account_id
+            )
+            .select_from(total_quantity_and_avg_price_instrument_account
+                         .join(currency_type, currency_type.c.id == total_quantity_and_avg_price_instrument_account.c.currency_id)
+                         )
+            .where(total_quantity_and_avg_price_instrument_account.c.instrument_type_id == 3)
+            .where(total_quantity_and_avg_price_instrument_account.c.account_id == account_id)
+            .where(currency_type.c.carrency_name == currency_name)
+        )
+        result = await session.execute(query)
+        free_currency_for_account = [{row[0]: {
+            'instrument_name': row[1], 
+            'total_quantity': row[2], 
+            'avg_price': row[3], 
+            'currency_name': row[4], 
+            'account_id': row[5]
+            }
+            } for row in result.all()]
+        return {"free_currency_for_account": free_currency_for_account}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail={"status": "error", "data": None, "details": str(e)})

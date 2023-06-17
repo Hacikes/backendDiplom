@@ -558,3 +558,175 @@ async def get_percent_of_companies_by_user_id(user_id: int, session=Depends(get_
         return {"percent_of_companies_for_user": percent_of_companies_for_user1}
     except Exception as e:
         raise HTTPException(status_code=500, detail={"status": "error", "data": None, "details": str(e)})
+
+
+# Получение доли одного инструмента по имени для счёте
+@router.get("/{account_id}/percent_by_instrument_name_for_one_instrument", description="Получение объёма одного инструмента для счёта. Использовать на экране деталей инструментов")
+async def get_percent_by_instrument_name_for_one_instrument(account_id: int, instrument_name: str, session=Depends(get_async_session)):
+    try:
+        subquery = (
+            select(
+                account.c.id.label('account_id'),
+                func.sum(
+                    case(
+                        (
+                            total_quantity_and_avg_price_instrument_account.c.instrument_name.in_(['RUB', 'EUR', 'USD', 'HKD', 'CHY']),
+                            currency_type.c.rate * total_quantity_and_avg_price_instrument_account.c.total_quantity
+                        ),
+                        else_=currency_type.c.rate * total_quantity_and_avg_price_instrument_account.c.avg_price * total_quantity_and_avg_price_instrument_account.c.total_quantity
+                    )
+                ).label('total_value')
+            )
+            .select_from(total_quantity_and_avg_price_instrument_account
+                         .join(account, account.c.id == total_quantity_and_avg_price_instrument_account.c.account_id)
+                         .join(currency_type, currency_type.c.id == total_quantity_and_avg_price_instrument_account.c.currency_id)
+                         )
+            .where(account.c.id == account_id)
+            .group_by(account.c.id)
+            .subquery()
+        )
+
+        query = (
+            select(
+                total_quantity_and_avg_price_instrument_account.c.instrument_name,
+                func.sum(
+                    case(
+                        (
+                            total_quantity_and_avg_price_instrument_account.c.instrument_name.in_(['RUB', 'EUR', 'USD', 'HKD', 'CHY']),
+                            currency_type.c.rate * total_quantity_and_avg_price_instrument_account.c.total_quantity
+                        ),
+                        else_=currency_type.c.rate * total_quantity_and_avg_price_instrument_account.c.avg_price * total_quantity_and_avg_price_instrument_account.c.total_quantity
+                    )
+                ).label('total_amount'),
+                func.sum(
+                    case(
+                        (
+                            total_quantity_and_avg_price_instrument_account.c.instrument_name.in_(['RUB', 'EUR', 'USD', 'HKD', 'CHY']),
+                            currency_type.c.rate * total_quantity_and_avg_price_instrument_account.c.total_quantity
+                        ),
+                        else_=currency_type.c.rate * total_quantity_and_avg_price_instrument_account.c.avg_price * total_quantity_and_avg_price_instrument_account.c.total_quantity
+                    )
+                ) * 100 /
+                (
+                    select(
+                        func.sum(
+                            case(
+                                (
+                                    total_quantity_and_avg_price_instrument_account.c.instrument_name.in_(['RUB', 'EUR', 'USD', 'HKD', 'CHY']),
+                                    currency_type.c.rate * total_quantity_and_avg_price_instrument_account.c.total_quantity
+                                ),
+                                else_=currency_type.c.rate * total_quantity_and_avg_price_instrument_account.c.avg_price * total_quantity_and_avg_price_instrument_account.c.total_quantity
+                            )
+                        )
+                    )
+                    .select_from(total_quantity_and_avg_price_instrument_account
+                                 .join(account, account.c.id == total_quantity_and_avg_price_instrument_account.c.account_id)
+                                 .join(currency_type, currency_type.c.id == total_quantity_and_avg_price_instrument_account.c.currency_id)
+                                 )
+                    .where(account.c.id == account_id)
+                    #.where(total_quantity_and_avg_price_instrument_account.c.instrument_name == instrument_name)
+                ).label('share')
+            )
+            .select_from(total_quantity_and_avg_price_instrument_account
+                         .join(account, account.c.id == total_quantity_and_avg_price_instrument_account.c.account_id)
+                         .join(currency_type, currency_type.c.id == total_quantity_and_avg_price_instrument_account.c.currency_id)
+                         .join(subquery, subquery.c.account_id == account.c.id)
+                         )
+            .where(account.c.id == account_id)
+            .where(total_quantity_and_avg_price_instrument_account.c.instrument_name == instrument_name)
+            .group_by(total_quantity_and_avg_price_instrument_account.c.instrument_name)
+        )
+
+        result = await session.execute(query)
+        percent_by_instrument_name_for_one_instrument = [
+            {row[0]: {'total_amount': row[1], 'share': row[2]}} for row in result.all()
+        ]
+        return {"percent_by_instrument_name_for_one_instrument": percent_by_instrument_name_for_one_instrument}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail={"status": "error", "data": None, "details": str(e)})
+
+
+# Получение доли одного инструмента по имени для пользователя    
+@router.get("/user/{user_id}/percent_by_instrument_name_for_one_instrument_for_user", description="Получение доли одного инструмента по имени для пользователя . Использовать на экране деталей инструментов")
+async def get_percent_by_instrument_name_for_one_instrument_for_user(user_id: int, instrument_name: str, session=Depends(get_async_session)):
+    try:
+        subquery = (
+            select(
+                account.c.id.label('account_id'),
+                func.sum(
+                    case(
+                        (
+                            total_quantity_and_avg_price_instrument_account.c.instrument_name.in_(['RUB', 'EUR', 'USD', 'HKD', 'CHY']),
+                            currency_type.c.rate * total_quantity_and_avg_price_instrument_account.c.total_quantity
+                        ),
+                        else_=currency_type.c.rate * total_quantity_and_avg_price_instrument_account.c.avg_price * total_quantity_and_avg_price_instrument_account.c.total_quantity
+                    )
+                ).label('total_value')
+            )
+            .select_from(total_quantity_and_avg_price_instrument_account
+                         .join(account, account.c.id == total_quantity_and_avg_price_instrument_account.c.account_id)
+                         .join(currency_type, currency_type.c.id == total_quantity_and_avg_price_instrument_account.c.currency_id)
+                         )
+            .where(account.c.user_id == user_id)
+            .group_by(account.c.id)
+            .subquery()
+        )
+
+        query =(
+            select(
+                total_quantity_and_avg_price_instrument_account.c.instrument_name, 
+                total_quantity_and_avg_price_instrument_account.c.currency_id,
+                func.sum(
+                    case(
+                        (
+                            total_quantity_and_avg_price_instrument_account.c.instrument_name.in_(['RUB', 'EUR', 'USD', 'HKD', 'CHY']),
+                            currency_type.c.rate * total_quantity_and_avg_price_instrument_account.c.total_quantity
+                        ),
+                        else_=currency_type.c.rate * total_quantity_and_avg_price_instrument_account.c.avg_price * total_quantity_and_avg_price_instrument_account.c.total_quantity
+                    )
+                ).label('total_amount'),
+                func.sum(
+                    case(
+                        (
+                            total_quantity_and_avg_price_instrument_account.c.instrument_name.in_(['RUB', 'EUR', 'USD', 'HKD', 'CHY']),
+                            currency_type.c.rate * total_quantity_and_avg_price_instrument_account.c.total_quantity
+                        ),
+                        else_=currency_type.c.rate * total_quantity_and_avg_price_instrument_account.c.avg_price * total_quantity_and_avg_price_instrument_account.c.total_quantity
+                    )
+                ) * 100 /
+                (
+                    select(
+                        func.sum(
+                            case(
+                                (
+                                    total_quantity_and_avg_price_instrument_account.c.instrument_name.in_(['RUB', 'EUR', 'USD', 'HKD', 'CHY']),
+                                    currency_type.c.rate * total_quantity_and_avg_price_instrument_account.c.total_quantity
+                                    ),
+                                else_=currency_type.c.rate * total_quantity_and_avg_price_instrument_account.c.avg_price * total_quantity_and_avg_price_instrument_account.c.total_quantity
+                            )
+                        )
+                    )
+                    .select_from(total_quantity_and_avg_price_instrument_account
+                                 .join(account, account.c.id == total_quantity_and_avg_price_instrument_account.c.account_id)
+                                 .join(currency_type, currency_type.c.id == total_quantity_and_avg_price_instrument_account.c.currency_id)
+                                 .join(user, user.c.id == account.c.user_id))
+                    .where(user.c.id == user_id)
+                ).label('share')
+            )
+            .select_from(total_quantity_and_avg_price_instrument_account
+                         .join(account, account.c.id == total_quantity_and_avg_price_instrument_account.c.account_id)
+                         .join(user, user.c.id == account.c.user_id)
+                         .join(currency_type, currency_type.c.id == total_quantity_and_avg_price_instrument_account.c.currency_id)
+                         .join(subquery, subquery.c.account_id == account.c.id)
+                         )
+            .where(user.c.id == user_id)
+            .where(total_quantity_and_avg_price_instrument_account.c.instrument_name == instrument_name)
+            .group_by(total_quantity_and_avg_price_instrument_account.c.instrument_name)
+            .group_by(total_quantity_and_avg_price_instrument_account.c.currency_id)
+    )
+
+        result = await session.execute(query)
+        percent_by_instrument_name_for_one_instrument_for_user = [{row[0]: {'': row[1], 'total_amount': row[2], 'share': row[2]}} for row in result.all()]
+        return {"percent_by_instrument_name_for_one_instrument_for_user": percent_by_instrument_name_for_one_instrument_for_user}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail={"status": "error", "data": None, "details": str(e)})
