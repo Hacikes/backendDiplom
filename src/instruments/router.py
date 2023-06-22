@@ -262,18 +262,18 @@ async def get_total_volume_in_RUB_by_user_id(user_id: int, session=Depends(get_a
 
 
     
-    # Получение свободного кеша для счёта по всем валютам. Вывод в рублях
+# Получение свободного кеша для счёта по всем валютам. Вывод в рублях
 @router.get("/{account_id}/total_value_for_instrument_type_id", description="Получение свободного кеша для счёта по всем валютам. Вывод в рублях")
 async def get_free_value_for_account(account_id: int, session=Depends(get_async_session)):
     try:
         query = (
             select(
-                func.sum(currency_type.c.rate * total_quantity_and_avg_price_instrument_account.c.avg_price * total_quantity_and_avg_price_instrument_account.c.total_quantity)
+                total_quantity_and_avg_price_instrument_account.c.total_quantity
             )
             .select_from(total_quantity_and_avg_price_instrument_account)
             .join(currency_type, currency_type.c.id == total_quantity_and_avg_price_instrument_account.c.currency_id)
             .where(total_quantity_and_avg_price_instrument_account.c.account_id == account_id)
-            .where(total_quantity_and_avg_price_instrument_account.c.instrument_type_id == 3)
+            .where(total_quantity_and_avg_price_instrument_account.c.instrument_name == 'RUB')
         )
         result = await session.execute(query)
         total_value_for_instrument_type_id = result.scalar()
@@ -292,14 +292,14 @@ async def get_free_value_for_user(user_id: int, session=Depends(get_async_sessio
     try:
         query = (
             select(
-                func.sum(currency_type.c.rate * total_quantity_and_avg_price_instrument_account.c.avg_price * total_quantity_and_avg_price_instrument_account.c.total_quantity)
+                total_quantity_and_avg_price_instrument_account.c.total_quantity
             )
             .select_from(total_quantity_and_avg_price_instrument_account
                 .join(account).join(user)
                 .join(currency_type, currency_type.c.id == total_quantity_and_avg_price_instrument_account.c.currency_id)
             )
             .where(user.c.id == user_id)
-            .where(total_quantity_and_avg_price_instrument_account.c.instrument_type_id == 3)
+            .where(total_quantity_and_avg_price_instrument_account.c.instrument_name == 'RUB')
         )
         result = await session.execute(query)
         total_value_for_instrument_type_id = result.scalar()

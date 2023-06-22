@@ -93,7 +93,8 @@ select * from operation_type
 - update_total_quantity_and_avg_price()  \/
 - check_quantity_trigger() \/
 - prevent_zero_values() \/
-- insert_instrument()
+- insert_instrument() 
+- delete_related_records() \/
 -----------------------------------------------------------------------------------------------------------------------------------------------------
 ПРОМТ (прочитай полностью, чтобы понять логику)
 Свещенный триггер которая реализует логику:
@@ -529,8 +530,69 @@ FOR EACH ROW
 EXECUTE FUNCTION insert_instrument();
 
 --------------------------------------------------------------------------------------------------------------------------------------
+Промт для триггера для удаления счёта и его инструментов:
+Напиши триггер, чтобы при удалении записи из таблицы account, Которая создана скриптом:
+CREATE TABLE public.account (
+	id serial4 NOT NULL,
+	account_name varchar NOT NULL,
+	broker_name varchar NOT NULL,
+	"date" timestamp NULL,
+	user_id int4 NULL,
+	CONSTRAINT account_pkey PRIMARY KEY (id),
+	CONSTRAINT account_user_id_fkey FOREIGN KEY (user_id) REFERENCES public."user"(id)
+);
+Удалялись все записи из таблиц instrument и total_quantity_and_avg_price_instrument_account, где account.id = instrument.account_id и total_quantity_and_avg_price_instrument_account.account_id
 
+Скрипты для создания таблиц:
+CREATE TABLE public.total_quantity_and_avg_price_instrument_account (
+	id serial4 NOT NULL,
+	instrument_name varchar NOT NULL,
+	total_quantity int4 NOT NULL,
+	avg_price float8 NOT NULL,
+	currency_id int4 NOT NULL,
+	account_id int4 NOT NULL,
+	instrument_type_id int4 NOT NULL,
+	CONSTRAINT total_quantity_and_avg_price_instrument_account_pkey PRIMARY KEY (id),
+	CONSTRAINT total_quantity_and_avg_price_instrument_account_account_id_fkey FOREIGN KEY (account_id) REFERENCES public.account(id)
+);
 
+CREATE TABLE public.instrument (
+	id serial4 NOT NULL,
+	instrument_name varchar NOT NULL,
+	price float8 NOT NULL,
+	currency_id int4 NOT NULL,
+	quantity int4 NOT NULL,
+	figi varchar NULL,
+	"date" timestamp NULL,
+	instrument_type_id int4 NOT NULL,
+	account_id int4 NOT NULL,
+	operation_type_id int4 NOT NULL,
+	CONSTRAINT instrument_pkey PRIMARY KEY (id),
+	CONSTRAINT instrument_account_id_fkey FOREIGN KEY (account_id) REFERENCES public.account(id),
+	CONSTRAINT instrument_currency_id_fkey FOREIGN KEY (currency_id) REFERENCES public.currency_type(id),
+	CONSTRAINT instrument_instrument_type_id_fkey FOREIGN KEY (instrument_type_id) REFERENCES public.instrument_type(id),
+	CONSTRAINT instrument_operation_type_id_fkey FOREIGN KEY (operation_type_id) REFERENCES public.operation_type(id)
+);
+
+Сам триггер:
+CREATE OR REPLACE FUNCTION delete_related_records()
+RETURNS TRIGGER AS $$
+BEGIN
+    DELETE FROM public.instrument
+    WHERE account_id = OLD.id;
+    
+    DELETE FROM public.total_quantity_and_avg_price_instrument_account
+    WHERE account_id = OLD.id;
+    
+    RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER delete_related_records_trigger
+BEFORE DELETE ON public.account
+FOR EACH ROW
+EXECUTE FUNCTION delete_related_records();
+--------------------------------------------------------------------------------------------------------------------------------------
 
 
 
