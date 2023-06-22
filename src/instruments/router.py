@@ -120,8 +120,10 @@ async def get_total_instruments_by_account_id(account_id: int, session: AsyncSes
                 total_quantity_and_avg_price_instrument_account.c.instrument_name,
                 total_quantity_and_avg_price_instrument_account.c.total_quantity,
                 total_quantity_and_avg_price_instrument_account.c.avg_price,
+                total_quantity_and_avg_price_instrument_account.c.currency_id,
                 currency_type.c.carrency_name,
                 total_quantity_and_avg_price_instrument_account.c.account_id,
+                total_quantity_and_avg_price_instrument_account.c.instrument_type_id,
                 instrument_type.c.instrument_type_name
             )
             .select_from(
@@ -138,9 +140,11 @@ async def get_total_instruments_by_account_id(account_id: int, session: AsyncSes
                     'instrument_name': row[1],
                     'total_quantity': row[2],
                     'avg_price': row[3],
-                    'currency_name': row[4],
-                    'account_id': row[5],
-                    'instrument_type_name': row[6],
+                    'currency_id': row[4],
+                    'currency_name': row[5],
+                    'account_id': row[6],
+                    'instrument_type_id': row[7],
+                    'instrument_type_name': row[8],
                 }
             } for row in result.all()
         ]
